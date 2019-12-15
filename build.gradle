@@ -1,5 +1,5 @@
 buildscript {
-    
+    ext.kotlinVersion = '1.2.71'   // これを追加
 
     repositories {
         mavenLocal()
@@ -10,19 +10,20 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.1'
-        
-
+        classpath 'com.android.tools.build:gradle:3.1.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion" // これを追加
     }
 }
 
 allprojects {
+    apply plugin: "eclipse"
+    apply plugin: "idea"
 
     version = '1.0'
     ext {
         appName = "JumpActionGame"
-        gdxVersion = '1.9.10'
-        roboVMVersion = '2.3.8'
+        gdxVersion = '1.9.8'
+        roboVMVersion = '2.3.3'
         box2DLightsVersion = '1.4'
         ashleyVersion = '1.7.0'
         aiVersion = '1.8.0'
@@ -31,7 +32,6 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        jcenter()
         google()
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
         maven { url "https://oss.sonatype.org/content/repositories/releases/" }
@@ -40,27 +40,32 @@ allprojects {
 
 project(":android") {
     apply plugin: "android"
+    apply plugin: "kotlin-android"  // これを追加
 
     configurations { natives }
 
     dependencies {
-        implementation project(":core")
-        api "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
+        compile project(":core")
+        compile "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
         natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi"
         natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
         natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
         natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86"
         natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
-        
+        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"  // これを追加
     }
 }
 
 project(":core") {
-    apply plugin: "java-library"
+    apply plugin: "kotlin"  // これを置き換え
 
 
     dependencies {
-        api "com.badlogicgames.gdx:gdx:$gdxVersion"
-        
+        compile "com.badlogicgames.gdx:gdx:$gdxVersion"
+        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion" // これを追加
     }
+}
+
+tasks.eclipse.doLast {
+    delete ".project"
 }

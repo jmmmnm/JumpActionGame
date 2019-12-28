@@ -2,21 +2,20 @@ package jp.techacademy.jommo.minami.jumpactiongame
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.ScreenAdapter
-import com.badlogic.gdx.graphics.Camera
 import com.badlogic.gdx.graphics.GL20
-import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.utils.viewport.FitViewport
+import com.badlogic.gdx.graphics.OrthographicCamera
 import java.util.*
 
-class GameScreen (private val mGame: JumpActionGame) : ScreenAdapter() {
-    companion object{
+class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
+    companion object {
         val CAMERA_WIDTH = 10f
         val CAMERA_HEIGHT = 15f
         val WORLD_WIDTH = 10f
-        val WORLD_HEIGHT = 15 * 20      // 20画面分登れば終了
+        val WORLD_HEIGHT = 15 * 20    // 20画面分登れば終了
 
         val GAME_STATE_READY = 0
         val GAME_STATE_PLAYING = 1
@@ -39,14 +38,14 @@ class GameScreen (private val mGame: JumpActionGame) : ScreenAdapter() {
     private var mGameState: Int
 
     init {
-        //背景の準備
+        // 背景の準備
         val bgTexture = Texture("back.png")
-        //TextureRegionで切り出すときの原点は左上
-        mBg = Sprite(TextureRegion(bgTexture, 0,0,540, 810))
+        // TextureRegionで切り出す時の原点は左上
+        mBg = Sprite(TextureRegion(bgTexture, 0, 0, 540, 810))
         mBg.setSize(CAMERA_WIDTH, CAMERA_HEIGHT)
-        mBg.setPosition(0f,0f)
+        mBg.setPosition(0f, 0f)
 
-       // カメラ、ViewPortを生成、設定する
+        // カメラ、ViewPortを生成、設定する
         mCamera = OrthographicCamera()
         mCamera.setToOrtho(false, CAMERA_WIDTH, CAMERA_HEIGHT)
         mViewPort = FitViewport(CAMERA_WIDTH, CAMERA_HEIGHT, mCamera)
@@ -61,7 +60,10 @@ class GameScreen (private val mGame: JumpActionGame) : ScreenAdapter() {
     }
 
     override fun render(delta: Float) {
-        Gdx.gl.glClearColor(0f,0f,0f,1f)
+        // それぞれの状態をアップデートする
+        update(delta)
+
+        Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
 
         // カメラの座標をアップデート（計算）し、スプライトの表示に反映させる
@@ -76,7 +78,7 @@ class GameScreen (private val mGame: JumpActionGame) : ScreenAdapter() {
         mBg.draw(mGame.batch)
 
         // Step
-        for (i in 0 until mStars.size) {
+        for (i in 0 until mSteps.size) {
             mSteps[i].draw(mGame.batch)
         }
 
@@ -88,7 +90,7 @@ class GameScreen (private val mGame: JumpActionGame) : ScreenAdapter() {
         // UFO
         mUfo.draw(mGame.batch)
 
-        // Player
+        //Player
         mPlayer.draw(mGame.batch)
 
         mGame.batch.end()
@@ -112,7 +114,7 @@ class GameScreen (private val mGame: JumpActionGame) : ScreenAdapter() {
 
         val maxJumpHeight = Player.PLAYER_JUMP_VELOCITY * Player.PLAYER_JUMP_VELOCITY / (2 * -GRAVITY)
         while (y < WORLD_HEIGHT - 5) {
-            val type = if (mRandom.nextFloat() > 0.8F) Step.STEP_TYPE_MOVING else Step.STEP_TYPE_STATIC
+            val type = if(mRandom.nextFloat() > 0.8f) Step.STEP_TYPE_MOVING else Step.STEP_TYPE_STATIC
             val x = mRandom.nextFloat() * (WORLD_WIDTH - Step.STEP_WIDTH)
 
             val step = Step(type, stepTexture, 0, 0, 144, 36)
@@ -131,10 +133,10 @@ class GameScreen (private val mGame: JumpActionGame) : ScreenAdapter() {
 
         // Playerを配置
         mPlayer = Player(playerTexture, 0, 0, 72, 72)
-        mPlayer.setPosition(WORLD_WIDTH / -mPlayer.width / 2, Step.STEP_HEIGHT)
+        mPlayer.setPosition(WORLD_WIDTH / 2 - mPlayer.width / 2, Step.STEP_HEIGHT)
 
         // ゴールのUFOを配置
-        mUfo = Ufo(ufoTexture, 0,0,120,74)
+        mUfo = Ufo(ufoTexture, 0, 0, 120, 74)
         mUfo.setPosition(WORLD_WIDTH / 2 - Ufo.UFO_WIDTH / 2, y)
     }
 
@@ -150,4 +152,3 @@ class GameScreen (private val mGame: JumpActionGame) : ScreenAdapter() {
         }
     }
 }
-

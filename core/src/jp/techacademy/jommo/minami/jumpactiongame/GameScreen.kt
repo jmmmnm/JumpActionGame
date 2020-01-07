@@ -7,6 +7,8 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.utils.viewport.FitViewport
+import com.badlogic.gdx.math.Rectangle
+import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.graphics.OrthographicCamera
 import java.util.*
 
@@ -16,6 +18,8 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
         val CAMERA_HEIGHT = 15f
         val WORLD_WIDTH = 10f
         val WORLD_HEIGHT = 15 * 20    // 20画面分登れば終了
+        val GUI_WIDTH = 320f
+        val GUI_HEIGHT = 480f
 
         val GAME_STATE_READY = 0
         val GAME_STATE_PLAYING = 1
@@ -27,7 +31,9 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
 
     private val mBg: Sprite
     private val mCamera: OrthographicCamera
+    private val mGuiCamera: OrthographicCamera
     private val mViewPort: FitViewport
+    private val mGuiViewPort: FitViewport
 
     private var mRandom: Random
     private var mSteps: ArrayList<Step>
@@ -36,6 +42,8 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
     private lateinit var mPlayer: Player
 
     private var mGameState: Int
+    private var mHeightSoFar: Float = 0f
+    private var mTouchPoint: Vector3
 
     init {
         // 背景の準備
@@ -50,11 +58,17 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
         mCamera.setToOrtho(false, CAMERA_WIDTH, CAMERA_HEIGHT)
         mViewPort = FitViewport(CAMERA_WIDTH, CAMERA_HEIGHT, mCamera)
 
+        // GUI用のカメラを設定する
+        mGuiCamera = OrthographicCamera()   // ←追加する
+        mGuiCamera.setToOrtho(false, GUI_WIDTH, GUI_HEIGHT) // ←追加する
+        mGuiViewPort = FitViewport(GUI_WIDTH, GUI_HEIGHT, mGuiCamera)   // ←追加する
+
         // プロパティの初期化
         mRandom = Random()
         mSteps = ArrayList<Step>()
         mStars = ArrayList<Star>()
         mGameState = GAME_STATE_READY
+        mTouchPoint = Vector3() // ←追加する
 
         createStage()
     }
@@ -65,6 +79,11 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
 
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f)
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
+
+        // カメラの中心を超えたらカメラを上に移動させる つまりキャラが画面の上半分には絶対に行かない
+        if (mPlayer.y > mCamera.position.y) {
+            mCamera.position.y = mPlayer.y
+        }
 
         // カメラの座標をアップデート（計算）し、スプライトの表示に反映させる
         mCamera.update()
@@ -98,6 +117,7 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
 
     override fun resize(width: Int, height: Int) {
         mViewPort.update(width, height)
+        mGuiViewPort.update(width, height)
     }
 
     // ステージを作成する
@@ -144,11 +164,95 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
     private fun update(delta: Float) {
         when (mGameState) {
             GAME_STATE_READY ->
-                return
+                updateReady()
             GAME_STATE_PLAYING ->
-                return
+                updatePlaying(delta)
             GAME_STATE_GAMEOVER ->
-                return
+                updateGameOver()
+        }
+    }
+
+    private fun updateReady() {
+        if (Gdx.input.justTouched()) {
+            mGameState = GAME_STATE_PLAYING
+        }
+    }
+
+    private fun updatePlaying(delta: Float) {
+        var accel = 0f
+        if (Gdx.input.isTouched) {
+            mGuiViewPort.unproject(mTouchPoint.set(Gdx.input.x.toFloat(), Gdx.input.y.toFloat(), 0f))
+            val left = Rectangle(0f, 0f, GUI_WIDTH / 2, GUI_HEIGHT)
+            val right = Rectangle(GUI_WIDTH / 2, 0f, GUI_WIDTH / 2, GUI_HEIGHT)
+            if (left.contains(mTouchPoint.x, mTouchPoint.y)) {
+                accel = 5.0f
+            }
+            if (right.contains(mTouchPoint.x, mTouchPoint.y)) {
+                accel = -5.0f
+            }
+        }
+
+        // Step
+        for (i in 0 until mSteps.size) {
+            mSteps[i].update(delta)
+        }
+
+        // Player
+        if (mPlayer.y <= 0.5f) {
+            mPlayer.hitStep()
+        }
+        mPlayer.update(delta, accel)
+        mHeightSoFar = Math.max(mPlayer.y, mHeightSoFar)
+
+        // 当たり判定を行う
+        checkCollision()
+    }
+
+    private fun updateGameOver() {
+
+    }
+
+    private fun checkCollision() {
+        // UFO(ゴールとの当たり判定)
+        if(mPlayer.boundingRectangle.overlaps(mUfo.boundingRectangle)) {
+            mGameState = GAME_STATE_GAMEOVER
+            return
+        }
+
+        // Starとの当たり判定
+        for (i in 0 until mStars.size) {
+            val star = mStars[i]
+
+            if (star.mState == Star.STAR_NONE) {
+                continue
+            }
+
+            if (mPlayer.boundingRectangle.overlaps(star.boundingRectangle)) {
+                star.get()
+                break
+            }
+        }
+
+        // Stepとの当たり判定
+        // 上昇中はStepとの当たり判定を確認しない
+        if (mPlayer.velocity.y >0) {
+            return
+        }
+
+        for (i in 0 until mSteps.size) {
+            val step = mSteps[i]
+
+            if (step.mState == Step.STEP_STATE_VANISH) {
+                continue
+            }
+
+            if (mPlayer.boundingRectangle.overlaps(step.boundingRectangle)) {
+                mPlayer.hitStep()
+                if (mRandom.nextFloat() > 0.5f) {
+                    step.vanish()
+                }
+                break
+            }
         }
     }
 }

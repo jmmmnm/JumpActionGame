@@ -59,9 +59,9 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
         mViewPort = FitViewport(CAMERA_WIDTH, CAMERA_HEIGHT, mCamera)
 
         // GUI用のカメラを設定する
-        mGuiCamera = OrthographicCamera()   // ←追加する
-        mGuiCamera.setToOrtho(false, GUI_WIDTH, GUI_HEIGHT) // ←追加する
-        mGuiViewPort = FitViewport(GUI_WIDTH, GUI_HEIGHT, mGuiCamera)   // ←追加する
+        mGuiCamera = OrthographicCamera()
+        mGuiCamera.setToOrtho(false, GUI_WIDTH, GUI_HEIGHT)
+        mGuiViewPort = FitViewport(GUI_WIDTH, GUI_HEIGHT, mGuiCamera)
 
         // プロパティの初期化
         mRandom = Random()

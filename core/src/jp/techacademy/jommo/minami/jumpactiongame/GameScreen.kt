@@ -1,9 +1,11 @@
 package jp.techacademy.jommo.minami.jumpactiongame
 
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.Preferences
 import com.badlogic.gdx.ScreenAdapter
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.utils.viewport.FitViewport
@@ -44,6 +46,10 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
     private var mGameState: Int
     private var mHeightSoFar: Float = 0f
     private var mTouchPoint: Vector3
+    private var mFont: BitmapFont
+    private var mScore: Int
+    private var mHighScore: Int
+    private var mPrefs: Preferences
 
     init {
         // 背景の準備
@@ -69,6 +75,15 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
         mStars = ArrayList<Star>()
         mGameState = GAME_STATE_READY
         mTouchPoint = Vector3() // ←追加する
+
+        mFont = BitmapFont(Gdx.files.internal("font.fnt"), Gdx.files.internal("font.png"), false)
+        mFont.data.setScale(0.8f)
+        mScore = 0
+        mHighScore = 0
+
+        // ハイスコアをPreferencesから取得する
+        mPrefs = Gdx.app.getPreferences("jp.techacademy.taro.kirameki.jumpactiongame") // ←追加する
+        mHighScore = mPrefs.getInteger("HIGHSCORE", 0)
 
         createStage()
     }
@@ -112,6 +127,14 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
         //Player
         mPlayer.draw(mGame.batch)
 
+        mGame.batch.end()
+
+        // スコア表示
+        mGuiCamera.update()
+        mGame.batch.projectionMatrix = mGuiCamera.combined
+        mGame.batch.begin()
+        mFont.draw(mGame.batch, "HighScore: $mHighScore", 16f, GUI_HEIGHT - 15)
+        mFont.draw(mGame.batch, "Score: $mScore", 16f, GUI_HEIGHT - 35)
         mGame.batch.end()
     }
 
@@ -206,6 +229,9 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
 
         // 当たり判定を行う
         checkCollision()
+
+        // ゲームオーバーか判断する
+        checkGameOver()
     }
 
     private fun updateGameOver() {
@@ -229,6 +255,13 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
 
             if (mPlayer.boundingRectangle.overlaps(star.boundingRectangle)) {
                 star.get()
+                mScore++
+                if (mScore > mHighScore) {
+                    mHighScore = mScore
+                    //ハイスコアをPreferenceに保存する
+                    mPrefs.putInteger("HIGHSCORE", mHighScore)
+                    mPrefs.flush()
+                }
                 break
             }
         }
@@ -246,13 +279,22 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
                 continue
             }
 
-            if (mPlayer.boundingRectangle.overlaps(step.boundingRectangle)) {
-                mPlayer.hitStep()
-                if (mRandom.nextFloat() > 0.5f) {
-                    step.vanish()
+            if (mPlayer.y > step.y) {
+                if (mPlayer.boundingRectangle.overlaps(step.boundingRectangle)) {
+                    mPlayer.hitStep()
+                    if (mRandom.nextFloat() > 0.5f) {
+                        step.vanish()
+                    }
                 }
                 break
             }
+        }
+    }
+
+    private fun checkGameOver() {
+        if (mHeightSoFar - CAMERA_HEIGHT / 2 > mPlayer.y) {
+            Gdx.app.log("JampActionGame", "GAMEOVER")
+            mGameState = GAME_STATE_GAMEOVER
         }
     }
 }

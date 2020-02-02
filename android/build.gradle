@@ -88,3 +88,7 @@ task run(type: Exec) {
     def adb = path + "/platform-tools/adb"
     commandLine "$adb", 'shell', 'am', 'start', '-n', 'jp.techacademy.jommo.minami.jumpactiongame/jp.techacademy.jommo.minami.jumpactiongame.AndroidLauncher'
 }
+
+dependencies {
+    compile 'com.google.android.gms:play-services:6.+'
+}

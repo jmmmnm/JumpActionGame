@@ -23,6 +23,9 @@ class ResultScreen(private val mGame: JumpActionGame, private val mScore: Int) :
     private var mFont: BitmapFont
 
     init{
+        if (mGame.mRequestHandler != null) { // ←追加する
+            mGame.mRequestHandler.showAds(true) // ←追加する
+        } // ←追加する
 
         // 背景の準備
         val bgTexture = Texture("resultback.png")
@@ -55,6 +58,9 @@ class ResultScreen(private val mGame: JumpActionGame, private val mScore: Int) :
         mGame.batch.end()
 
         if (Gdx.input.justTouched()) {
+            if (mGame.mRequestHandler != null) { // ←追加する
+                mGame.mRequestHandler.showAds(false) // ←追加する
+            } // ←追加する
             mGame.screen = GameScreen(mGame)
         }
     }

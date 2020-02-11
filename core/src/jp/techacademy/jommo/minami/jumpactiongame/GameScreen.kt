@@ -19,7 +19,7 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
         val CAMERA_WIDTH = 10f
         val CAMERA_HEIGHT = 15f
         val WORLD_WIDTH = 10f
-        val WORLD_HEIGHT = 15 * 20    // 20画面分登れば終了
+        val WORLD_HEIGHT = 15 * 3    // 20画面分登れば終了
         val GUI_WIDTH = 320f
         val GUI_HEIGHT = 480f
 
@@ -42,6 +42,7 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
     private var mStars: ArrayList<Star>
     private lateinit var mUfo: Ufo
     private lateinit var mPlayer: Player
+    private lateinit var mEnemy: Enemy
 
     private var mGameState: Int
     private var mHeightSoFar: Float = 0f
@@ -121,8 +122,11 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
             mStars[i].draw(mGame.batch)
         }
 
-        // UFO
+        // Ufo
         mUfo.draw(mGame.batch)
+
+        // Enemy
+        mEnemy.draw(mGame.batch)
 
         //Player
         mPlayer.draw(mGame.batch)
@@ -151,6 +155,7 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
         val starTexture = Texture("star.png")
         val playerTexture = Texture("uma.png")
         val ufoTexture = Texture("ufo.png")
+        val enemyTexture = Texture("enemy.png")
 
         // StepとStarをゴールの高さまで配置していく
         var y = 0f
@@ -181,6 +186,11 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
         // ゴールのUFOを配置
         mUfo = Ufo(ufoTexture, 0, 0, 120, 74)
         mUfo.setPosition(WORLD_WIDTH / 2 - Ufo.UFO_WIDTH / 2, y)
+
+        //　課題のEnemyを仮配置
+        mEnemy = Enemy(enemyTexture, 0,0,72,72)
+        mEnemy.setPosition(WORLD_WIDTH / 2 - Enemy.ENEMY_WIDTH / 2, y - Ufo.UFO_HEIGHT)
+
     }
 
     // それぞれのオブジェクトの状態をアップデートする
@@ -220,6 +230,8 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
             mSteps[i].update(delta)
         }
 
+        mEnemy.update(delta)
+
         // Player
         if (mPlayer.y <= 0.5f) {
             mPlayer.hitStep()
@@ -243,6 +255,11 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
     private fun checkCollision() {
         // UFO(ゴールとの当たり判定)
         if(mPlayer.boundingRectangle.overlaps(mUfo.boundingRectangle)) {
+            mGameState = GAME_STATE_GAMEOVER
+            return
+        }
+
+        if(mPlayer.boundingRectangle.overlaps(mEnemy.boundingRectangle)) {
             mGameState = GAME_STATE_GAMEOVER
             return
         }

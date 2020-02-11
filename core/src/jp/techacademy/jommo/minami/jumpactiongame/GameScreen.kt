@@ -13,13 +13,16 @@ import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.graphics.OrthographicCamera
 import java.util.*
+import com.badlogic.gdx.audio.Sound
+
+
 
 class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
     companion object {
         val CAMERA_WIDTH = 10f
         val CAMERA_HEIGHT = 15f
         val WORLD_WIDTH = 10f
-        val WORLD_HEIGHT = 15 * 3    // 20画面分登れば終了
+        val WORLD_HEIGHT = 15 * 2    // 20画面分登れば終了
         val GUI_WIDTH = 320f
         val GUI_HEIGHT = 480f
 
@@ -51,6 +54,7 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
     private var mScore: Int
     private var mHighScore: Int
     private var mPrefs: Preferences
+
 
     init {
         // 背景の準備
@@ -253,14 +257,22 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
     }
 
     private fun checkCollision() {
-        // UFO(ゴールとの当たり判定)
-        if(mPlayer.boundingRectangle.overlaps(mUfo.boundingRectangle)) {
+
+        val Sound = Gdx.audio.newSound(Gdx.files.internal("bon.wav"))
+
+        // Enemy との当たり判定
+        if(mPlayer.boundingRectangle.overlaps(mEnemy.boundingRectangle)) {
+            Sound.play(1.0f)
+            Sound.dispose()
+
             mGameState = GAME_STATE_GAMEOVER
             return
         }
 
-        if(mPlayer.boundingRectangle.overlaps(mEnemy.boundingRectangle)) {
+        // UFO(ゴールとの当たり判定)
+        if(mPlayer.boundingRectangle.overlaps(mUfo.boundingRectangle)) {
             mGameState = GAME_STATE_GAMEOVER
+
             return
         }
 

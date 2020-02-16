@@ -16,7 +16,6 @@ import java.util.*
 import com.badlogic.gdx.audio.Sound
 
 
-
 class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
     companion object {
         val CAMERA_WIDTH = 10f
@@ -54,6 +53,7 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
     private var mScore: Int
     private var mHighScore: Int
     private var mPrefs: Preferences
+    private lateinit var mSound: Sound
 
 
     init {
@@ -160,6 +160,7 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
         val playerTexture = Texture("uma.png")
         val ufoTexture = Texture("ufo.png")
         val enemyTexture = Texture("enemy.png")
+        mSound = Gdx.audio.newSound(Gdx.files.internal("bon.wav"))
 
         // StepとStarをゴールの高さまで配置していく
         var y = 0f
@@ -258,12 +259,10 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
 
     private fun checkCollision() {
 
-        val Sound = Gdx.audio.newSound(Gdx.files.internal("bon.wav"))
-
         // Enemy との当たり判定
         if(mPlayer.boundingRectangle.overlaps(mEnemy.boundingRectangle)) {
-            Sound.play(1.0f)
-            Sound.dispose()
+            mSound.play(1.0f)
+
 
             mGameState = GAME_STATE_GAMEOVER
             return

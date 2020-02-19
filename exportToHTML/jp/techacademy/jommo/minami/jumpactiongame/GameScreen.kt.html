@@ -1,0 +1,358 @@
+<html>
+<head>
+<title>GameScreen.kt</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #000080; font-weight: bold;}
+.s1 { color: #000000;}
+.s2 { color: #0000ff;}
+.s3 { color: #808080; font-style: italic;}
+.s4 { color: #008000; font-weight: bold;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+GameScreen.kt</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span>jp.techacademy.jommo.minami.jumpactiongame
+
+import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.Preferences
+import com.badlogic.gdx.ScreenAdapter
+import com.badlogic.gdx.graphics.GL20
+import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.BitmapFont
+import com.badlogic.gdx.graphics.g2d.Sprite
+import com.badlogic.gdx.graphics.g2d.TextureRegion
+import com.badlogic.gdx.utils.viewport.FitViewport
+import com.badlogic.gdx.math.Rectangle
+import com.badlogic.gdx.math.Vector3
+import com.badlogic.gdx.graphics.OrthographicCamera
+import java.util.*
+import com.badlogic.gdx.audio.Sound
+
+
+<span class="s0">class </span>GameScreen(private <span class="s0">val </span>mGame: JumpActionGame) : ScreenAdapter() {
+    companion <span class="s0">object </span>{
+        <span class="s0">val </span>CAMERA_WIDTH = <span class="s2">10f</span>
+        <span class="s0">val </span>CAMERA_HEIGHT = <span class="s2">15f</span>
+        <span class="s0">val </span>WORLD_WIDTH = <span class="s2">10f</span>
+        <span class="s0">val </span>WORLD_HEIGHT = <span class="s2">15 </span>* <span class="s2">2    </span><span class="s3">// 20画面分登れば終了</span>
+        <span class="s0">val </span>GUI_WIDTH = <span class="s2">320f</span>
+        <span class="s0">val </span>GUI_HEIGHT = <span class="s2">480f</span>
+
+        <span class="s0">val </span>GAME_STATE_READY = <span class="s2">0</span>
+        <span class="s0">val </span>GAME_STATE_PLAYING = <span class="s2">1</span>
+        <span class="s0">val </span>GAME_STATE_GAMEOVER = <span class="s2">2</span>
+
+        <span class="s3">// 重力</span>
+        <span class="s0">val </span>GRAVITY = -<span class="s2">12</span>
+    }
+
+    private <span class="s0">val </span>mBg: Sprite
+    private <span class="s0">val </span>mCamera: OrthographicCamera
+    private <span class="s0">val </span>mGuiCamera: OrthographicCamera
+    private <span class="s0">val </span>mViewPort: FitViewport
+    private <span class="s0">val </span>mGuiViewPort: FitViewport
+
+    private <span class="s0">var </span>mRandom: Random
+    private <span class="s0">var </span>mSteps: ArrayList&lt;Step&gt;
+    private <span class="s0">var </span>mStars: ArrayList&lt;Star&gt;
+    private lateinit <span class="s0">var </span>mUfo: Ufo
+    private lateinit <span class="s0">var </span>mPlayer: Player
+    private lateinit <span class="s0">var </span>mEnemy: Enemy
+
+    private <span class="s0">var </span>mGameState: Int
+    private <span class="s0">var </span>mHeightSoFar: Float = <span class="s2">0f</span>
+    private <span class="s0">var </span>mTouchPoint: Vector3
+    private <span class="s0">var </span>mFont: BitmapFont
+    private <span class="s0">var </span>mScore: Int
+    private <span class="s0">var </span>mHighScore: Int
+    private <span class="s0">var </span>mPrefs: Preferences
+    private lateinit <span class="s0">var </span>mSound: Sound
+
+
+    init {
+        <span class="s3">// 背景の準備</span>
+        <span class="s0">val </span>bgTexture = Texture(<span class="s4">&quot;back.png&quot;</span>)
+        <span class="s3">// TextureRegionで切り出す時の原点は左上</span>
+        mBg = Sprite(TextureRegion(bgTexture, <span class="s2">0</span>, <span class="s2">0</span>, <span class="s2">540</span>, <span class="s2">810</span>))
+        mBg.setSize(CAMERA_WIDTH, CAMERA_HEIGHT)
+        mBg.setPosition(<span class="s2">0f</span>, <span class="s2">0f</span>)
+
+        <span class="s3">// カメラ、ViewPortを生成、設定する</span>
+        mCamera = OrthographicCamera()
+        mCamera.setToOrtho(<span class="s0">false</span>, CAMERA_WIDTH, CAMERA_HEIGHT)
+        mViewPort = FitViewport(CAMERA_WIDTH, CAMERA_HEIGHT, mCamera)
+
+        <span class="s3">// GUI用のカメラを設定する</span>
+        mGuiCamera = OrthographicCamera()
+        mGuiCamera.setToOrtho(<span class="s0">false</span>, GUI_WIDTH, GUI_HEIGHT)
+        mGuiViewPort = FitViewport(GUI_WIDTH, GUI_HEIGHT, mGuiCamera)
+
+        <span class="s3">// プロパティの初期化</span>
+        mRandom = Random()
+        mSteps = ArrayList&lt;Step&gt;()
+        mStars = ArrayList&lt;Star&gt;()
+        mGameState = GAME_STATE_READY
+        mTouchPoint = Vector3() <span class="s3">// ←追加する</span>
+
+        mFont = BitmapFont(Gdx.files.internal(<span class="s4">&quot;font.fnt&quot;</span>), Gdx.files.internal(<span class="s4">&quot;font.png&quot;</span>), <span class="s0">false</span>)
+        mFont.data.setScale(<span class="s2">0.8f</span>)
+        mScore = <span class="s2">0</span>
+        mHighScore = <span class="s2">0</span>
+
+        <span class="s3">// ハイスコアをPreferencesから取得する</span>
+        mPrefs = Gdx.app.getPreferences(<span class="s4">&quot;jp.techacademy.taro.kirameki.jumpactiongame&quot;</span>) <span class="s3">// ←追加する</span>
+        mHighScore = mPrefs.getInteger(<span class="s4">&quot;HIGHSCORE&quot;</span>, <span class="s2">0</span>)
+
+        createStage()
+    }
+
+    override <span class="s0">fun </span>render(delta: Float) {
+        <span class="s3">// それぞれの状態をアップデートする</span>
+        update(delta)
+
+        Gdx.gl.glClearColor(<span class="s2">0f</span>, <span class="s2">0f</span>, <span class="s2">0f</span>, <span class="s2">1f</span>)
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
+
+        <span class="s3">// カメラの中心を超えたらカメラを上に移動させる つまりキャラが画面の上半分には絶対に行かない</span>
+        <span class="s0">if </span>(mPlayer.y &gt; mCamera.position.y) {
+            mCamera.position.y = mPlayer.y
+        }
+
+        <span class="s3">// カメラの座標をアップデート（計算）し、スプライトの表示に反映させる</span>
+        mCamera.update()
+        mGame.batch.projectionMatrix = mCamera.combined
+
+        mGame.batch.begin()
+
+        <span class="s3">// 背景</span>
+        // 原点は左下
+        mBg.setPosition(mCamera.position.x - CAMERA_WIDTH / <span class="s2">2</span>, mCamera.position.y - CAMERA_HEIGHT / <span class="s2">2</span>)
+        mBg.draw(mGame.batch)
+
+        <span class="s3">// Step</span>
+        <span class="s0">for </span>(i <span class="s0">in </span><span class="s2">0 </span>until mSteps.size) {
+            mSteps[i].draw(mGame.batch)
+        }
+
+        <span class="s3">// Star</span>
+        <span class="s0">for </span>(i <span class="s0">in </span><span class="s2">0 </span>until mStars.size) {
+            mStars[i].draw(mGame.batch)
+        }
+
+        <span class="s3">// Ufo</span>
+        mUfo.draw(mGame.batch)
+
+        <span class="s3">// Enemy</span>
+        mEnemy.draw(mGame.batch)
+
+        <span class="s3">//Player</span>
+        mPlayer.draw(mGame.batch)
+
+        mGame.batch.end()
+
+        <span class="s3">// スコア表示</span>
+        mGuiCamera.update()
+        mGame.batch.projectionMatrix = mGuiCamera.combined
+        mGame.batch.begin()
+        mFont.draw(mGame.batch, <span class="s4">&quot;HighScore: </span><span class="s0">$</span>mHighScore<span class="s4">&quot;</span>, <span class="s2">16f</span>, GUI_HEIGHT - <span class="s2">15</span>)
+        mFont.draw(mGame.batch, <span class="s4">&quot;Score: </span><span class="s0">$</span>mScore<span class="s4">&quot;</span>, <span class="s2">16f</span>, GUI_HEIGHT - <span class="s2">35</span>)
+        mGame.batch.end()
+    }
+
+    override <span class="s0">fun </span>resize(width: Int, height: Int) {
+        mViewPort.update(width, height)
+        mGuiViewPort.update(width, height)
+    }
+
+    <span class="s3">// ステージを作成する</span>
+    private <span class="s0">fun </span>createStage() {
+
+        <span class="s3">// テクスチャの準備</span>
+        <span class="s0">val </span>stepTexture = Texture(<span class="s4">&quot;step.png&quot;</span>)
+        <span class="s0">val </span>starTexture = Texture(<span class="s4">&quot;star.png&quot;</span>)
+        <span class="s0">val </span>playerTexture = Texture(<span class="s4">&quot;uma.png&quot;</span>)
+        <span class="s0">val </span>ufoTexture = Texture(<span class="s4">&quot;ufo.png&quot;</span>)
+        <span class="s0">val </span>enemyTexture = Texture(<span class="s4">&quot;enemy.png&quot;</span>)
+        mSound = Gdx.audio.newSound(Gdx.files.internal(<span class="s4">&quot;bon.wav&quot;</span>))
+
+        <span class="s3">// StepとStarをゴールの高さまで配置していく</span>
+        <span class="s0">var </span>y = <span class="s2">0f</span>
+
+        <span class="s0">val </span>maxJumpHeight = Player.PLAYER_JUMP_VELOCITY * Player.PLAYER_JUMP_VELOCITY / (<span class="s2">2 </span>* -GRAVITY)
+        <span class="s0">while </span>(y &lt; WORLD_HEIGHT - <span class="s2">5</span>) {
+            <span class="s0">val </span>type = <span class="s0">if</span>(mRandom.nextFloat() &gt; <span class="s2">0.8f</span>) Step.STEP_TYPE_MOVING <span class="s0">else </span>Step.STEP_TYPE_STATIC
+            <span class="s0">val </span>x = mRandom.nextFloat() * (WORLD_WIDTH - Step.STEP_WIDTH)
+
+            <span class="s0">val </span>step = Step(type, stepTexture, <span class="s2">0</span>, <span class="s2">0</span>, <span class="s2">144</span>, <span class="s2">36</span>)
+            step.setPosition(x, y)
+            mSteps.add(step)
+
+            <span class="s0">if </span>(mRandom.nextFloat() &gt; <span class="s2">0.6f</span>) {
+                <span class="s0">val </span>star = Star(starTexture, <span class="s2">0</span>, <span class="s2">0</span>, <span class="s2">72</span>, <span class="s2">72</span>)
+                star.setPosition(step.x + mRandom.nextFloat(), step.y + Star.STAR_HEIGHT + mRandom.nextFloat() * <span class="s2">3</span>)
+                mStars.add(star)
+            }
+
+            <span class="s0">if </span>(mRandom.nextFloat() &gt; <span class="s2">0.6f</span>) {
+                <span class="s0">val </span>star = Star(starTexture, <span class="s2">0</span>, <span class="s2">0</span>, <span class="s2">72</span>, <span class="s2">72</span>)
+                star.setPosition(step.x + mRandom.nextFloat(), step.y + Star.STAR_HEIGHT + mRandom.nextFloat() * <span class="s2">3</span>)
+                mEnemy.add(star)
+            }
+
+
+            y += (maxJumpHeight - <span class="s2">0.5f</span>)
+            y -= mRandom.nextFloat() * (maxJumpHeight / <span class="s2">3</span>)
+        }
+
+        <span class="s3">// Playerを配置</span>
+        mPlayer = Player(playerTexture, <span class="s2">0</span>, <span class="s2">0</span>, <span class="s2">72</span>, <span class="s2">72</span>)
+        mPlayer.setPosition(WORLD_WIDTH / <span class="s2">2 </span>- mPlayer.width / <span class="s2">2</span>, Step.STEP_HEIGHT)
+
+        <span class="s3">// ゴールのUFOを配置</span>
+        mUfo = Ufo(ufoTexture, <span class="s2">0</span>, <span class="s2">0</span>, <span class="s2">120</span>, <span class="s2">74</span>)
+        mUfo.setPosition(WORLD_WIDTH / <span class="s2">2 </span>- Ufo.UFO_WIDTH / <span class="s2">2</span>, y)
+
+        <span class="s3">//　課題のEnemyを仮配置</span>
+        mEnemy = Enemy(enemyTexture, <span class="s2">0</span>,<span class="s2">0</span>,<span class="s2">72</span>,<span class="s2">72</span>)
+        mEnemy.setPosition(WORLD_WIDTH / <span class="s2">2 </span>- Enemy.ENEMY_WIDTH / <span class="s2">2</span>, y - Ufo.UFO_HEIGHT)
+
+    }
+
+    <span class="s3">// それぞれのオブジェクトの状態をアップデートする</span>
+    private <span class="s0">fun </span>update(delta: Float) {
+        <span class="s0">when </span>(mGameState) {
+            GAME_STATE_READY -&gt;
+                updateReady()
+            GAME_STATE_PLAYING -&gt;
+                updatePlaying(delta)
+            GAME_STATE_GAMEOVER -&gt;
+                updateGameOver()
+        }
+    }
+
+    private <span class="s0">fun </span>updateReady() {
+        <span class="s0">if </span>(Gdx.input.justTouched()) {
+            mGameState = GAME_STATE_PLAYING
+        }
+    }
+
+    private <span class="s0">fun </span>updatePlaying(delta: Float) {
+        <span class="s0">var </span>accel = <span class="s2">0f</span>
+        <span class="s0">if </span>(Gdx.input.isTouched) {
+            mGuiViewPort.unproject(mTouchPoint.set(Gdx.input.x.toFloat(), Gdx.input.y.toFloat(), <span class="s2">0f</span>))
+            <span class="s0">val </span>left = Rectangle(<span class="s2">0f</span>, <span class="s2">0f</span>, GUI_WIDTH / <span class="s2">2</span>, GUI_HEIGHT)
+            <span class="s0">val </span>right = Rectangle(GUI_WIDTH / <span class="s2">2</span>, <span class="s2">0f</span>, GUI_WIDTH / <span class="s2">2</span>, GUI_HEIGHT)
+            <span class="s0">if </span>(left.contains(mTouchPoint.x, mTouchPoint.y)) {
+                accel = <span class="s2">5.0f</span>
+            }
+            <span class="s0">if </span>(right.contains(mTouchPoint.x, mTouchPoint.y)) {
+                accel = -<span class="s2">5.0f</span>
+            }
+        }
+
+        <span class="s3">// Step</span>
+        <span class="s0">for </span>(i <span class="s0">in </span><span class="s2">0 </span>until mSteps.size) {
+            mSteps[i].update(delta)
+        }
+
+        mEnemy.update(delta)
+
+        <span class="s3">// Player</span>
+        <span class="s0">if </span>(mPlayer.y &lt;= <span class="s2">0.5f</span>) {
+            mPlayer.hitStep()
+        }
+        mPlayer.update(delta, accel)
+        mHeightSoFar = Math.max(mPlayer.y, mHeightSoFar)
+
+        <span class="s3">// 当たり判定を行う</span>
+        checkCollision()
+
+        <span class="s3">// ゲームオーバーか判断する</span>
+        checkGameOver()
+    }
+
+    private <span class="s0">fun </span>updateGameOver() {
+        <span class="s0">if </span>(Gdx.input.justTouched()) {
+            mGame.screen = ResultScreen(mGame, mScore)
+        }
+    }
+
+    private <span class="s0">fun </span>checkCollision() {
+
+        <span class="s3">// Enemy との当たり判定</span>
+        <span class="s0">if</span>(mPlayer.boundingRectangle.overlaps(mEnemy.boundingRectangle)) {
+            mSound.play(<span class="s2">1.0f</span>)
+
+
+            mGameState = GAME_STATE_GAMEOVER
+            <span class="s0">return</span>
+        }
+
+        <span class="s3">// UFO(ゴールとの当たり判定)</span>
+        <span class="s0">if</span>(mPlayer.boundingRectangle.overlaps(mUfo.boundingRectangle)) {
+            mGameState = GAME_STATE_GAMEOVER
+
+            <span class="s0">return</span>
+        }
+
+        <span class="s3">// Starとの当たり判定</span>
+        <span class="s0">for </span>(i <span class="s0">in </span><span class="s2">0 </span>until mStars.size) {
+            <span class="s0">val </span>star = mStars[i]
+
+            <span class="s0">if </span>(star.mState == Star.STAR_NONE) {
+                <span class="s0">continue</span>
+            }
+
+            <span class="s0">if </span>(mPlayer.boundingRectangle.overlaps(star.boundingRectangle)) {
+                star.get()
+                mScore++
+                <span class="s0">if </span>(mScore &gt; mHighScore) {
+                    mHighScore = mScore
+                    <span class="s3">//ハイスコアをPreferenceに保存する</span>
+                    mPrefs.putInteger(<span class="s4">&quot;HIGHSCORE&quot;</span>, mHighScore)
+                    mPrefs.flush()
+                }
+                <span class="s0">break</span>
+            }
+        }
+
+        <span class="s3">// Stepとの当たり判定</span>
+        // 上昇中はStepとの当たり判定を確認しない
+        <span class="s0">if </span>(mPlayer.velocity.y &gt;<span class="s2">0</span>) {
+            <span class="s0">return</span>
+        }
+
+        <span class="s0">for </span>(i <span class="s0">in </span><span class="s2">0 </span>until mSteps.size) {
+            <span class="s0">val </span>step = mSteps[i]
+
+            <span class="s0">if </span>(step.mState == Step.STEP_STATE_VANISH) {
+                <span class="s0">continue</span>
+            }
+
+            <span class="s0">if </span>(mPlayer.y &gt; step.y) {
+                <span class="s0">if </span>(mPlayer.boundingRectangle.overlaps(step.boundingRectangle)) {
+                    mPlayer.hitStep()
+                    <span class="s0">if </span>(mRandom.nextFloat() &gt; <span class="s2">0.5f</span>) {
+                        step.vanish()
+                    }
+                    <span class="s0">break</span>
+                }
+            }
+        }
+    }
+
+    private <span class="s0">fun </span>checkGameOver() {
+        <span class="s0">if </span>(mHeightSoFar - CAMERA_HEIGHT / <span class="s2">2 </span>&gt; mPlayer.y) {
+            Gdx.app.log(<span class="s4">&quot;JampActionGame&quot;</span>, <span class="s4">&quot;GAMEOVER&quot;</span>)
+            mGameState = GAME_STATE_GAMEOVER
+        }
+    }
+}
+</pre>
+</body>
+</html>

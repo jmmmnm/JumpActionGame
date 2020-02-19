@@ -160,7 +160,7 @@ class GameScreen(private val mGame: JumpActionGame) : ScreenAdapter() {
         val playerTexture = Texture("uma.png")
         val ufoTexture = Texture("ufo.png")
         val enemyTexture = Texture("enemy.png")
-        mSound = Gdx.audio.newSound(Gdx.files.internal("bon.wav"))
+        mSound = Gdx.audio.newSound(Gdx.files.internal("puyon.mp3"))
 
         // StepとStarをゴールの高さまで配置していく
         var y = 0f

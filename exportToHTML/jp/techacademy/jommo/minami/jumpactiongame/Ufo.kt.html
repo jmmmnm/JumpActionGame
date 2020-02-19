@@ -1,0 +1,36 @@
+<html>
+<head>
+<title>Ufo.kt</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #000080; font-weight: bold;}
+.s1 { color: #000000;}
+.s2 { color: #808080; font-style: italic;}
+.s3 { color: #0000ff;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+Ufo.kt</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span>jp.techacademy.jommo.minami.jumpactiongame
+
+import com.badlogic.gdx.graphics.Texture
+
+<span class="s0">class </span>Ufo(texture: Texture, srcX: Int, srcY: Int, srcWidth: Int, srcHeight: Int)
+    : GameObject(texture, srcX, srcY, srcWidth, srcHeight) {
+
+    companion <span class="s0">object </span>{
+        <span class="s2">// 横幅、高さ</span>
+        <span class="s0">val </span>UFO_WIDTH = <span class="s3">2.0f</span>
+        <span class="s0">val </span>UFO_HEIGHT = <span class="s3">1.3f</span>
+    }
+
+    init {
+        setSize(UFO_WIDTH, UFO_HEIGHT)
+    }
+}</pre>
+</body>
+</html>

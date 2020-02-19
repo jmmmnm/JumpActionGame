@@ -1,0 +1,88 @@
+<html>
+<head>
+<title>AndroidLauncher.kt</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #000080; font-weight: bold;}
+.s1 { color: #000000;}
+.s2 { color: #0000ff;}
+.s3 { color: #808080; font-style: italic;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+AndroidLauncher.kt</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span>jp.techacademy.jommo.minami.jumpactiongame
+
+import android.graphics.Color
+import android.os.Bundle
+import android.os.Handler
+import android.os.Message
+import android.view.View
+import android.view.ViewGroup
+import android.widget.RelativeLayout
+
+import com.badlogic.gdx.backends.android.AndroidApplication
+import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
+
+<span class="s0">class </span>AndroidLauncher : AndroidApplication(), ActivityRequestHandler {
+    private lateinit <span class="s0">var </span>mAdView: AdView
+
+    private <span class="s0">val </span>SHOW_ADS = <span class="s2">1</span>
+    private <span class="s0">val </span>HIDE_ADS = <span class="s2">0</span>
+
+    private <span class="s0">val </span>mHandler: Handler = <span class="s0">object </span>: Handler() {
+        override <span class="s0">fun </span>handleMessage(msg: Message) {
+            <span class="s0">when </span>(msg.what) {
+                SHOW_ADS -&gt; mAdView.visibility = View.VISIBLE
+                HIDE_ADS -&gt; mAdView.visibility = View.GONE
+            }
+        }
+    }
+
+    override <span class="s0">fun </span>onCreate(savedInstanceState: Bundle?) {
+        <span class="s0">super</span>.onCreate(savedInstanceState)
+
+        <span class="s0">val </span>config = AndroidApplicationConfiguration()
+        <span class="s0">val </span>gameView = initializeForView(JumpActionGame(<span class="s0">this</span>), config)
+
+        mAdView = AdView(<span class="s0">this</span>)
+        mAdView.adSize = AdSize.BANNER
+        mAdView.adUnitId = resources.getString(R.string.banner_ad_unit_id)
+        mAdView.visibility = View.INVISIBLE
+        mAdView.setBackgroundColor(Color.BLACK)
+        <span class="s0">val </span>adRequest = AdRequest.Builder().build()
+        mAdView.loadAd(adRequest)
+
+        <span class="s3">//レイアウト</span>
+        <span class="s0">val </span>layout = RelativeLayout(<span class="s0">this</span>)
+        layout.addView(gameView,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT)
+
+        <span class="s0">val </span>params = RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT)
+        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+        layout.addView(mAdView, params)
+
+        setContentView(layout)
+        showAds(<span class="s0">false</span>)
+    }
+
+    override <span class="s0">fun </span>showAds(show: Boolean) {
+        <span class="s0">if </span>(show) {
+            mHandler.sendEmptyMessage(SHOW_ADS)
+        } <span class="s0">else </span>{
+            mHandler.sendEmptyMessage(HIDE_ADS)
+        }
+    }
+}</pre>
+</body>
+</html>

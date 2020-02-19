@@ -1,0 +1,80 @@
+<html>
+<head>
+<title>Player.kt</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #000080; font-weight: bold;}
+.s1 { color: #000000;}
+.s2 { color: #808080; font-style: italic;}
+.s3 { color: #0000ff;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+Player.kt</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span>jp.techacademy.jommo.minami.jumpactiongame
+
+import com.badlogic.gdx.graphics.Texture
+
+<span class="s0">class </span>Player(texture: Texture, srcX: Int, srcY: Int, srcWidth: Int, srcHeight: Int)
+    : GameObject(texture,srcX, srcY, srcWidth, srcHeight) {
+
+    companion <span class="s0">object</span>{
+        <span class="s2">// 横幅、高さ</span>
+        <span class="s0">val </span>PLAYER_WIDTH = <span class="s3">1.0f</span>
+        <span class="s0">val </span>PLAYER_HEIGHT = <span class="s3">1.0f</span>
+
+        <span class="s2">// 状態（ジャンプ中、落ちている最中）</span>
+        <span class="s0">val </span>PLAYER_STATE_JUMP = <span class="s3">0</span>
+        <span class="s0">val </span>PLAYER_STATE_FALL = <span class="s3">1</span>
+
+        <span class="s2">// 速度</span>
+        <span class="s0">val </span>PLAYER_JUMP_VELOCITY = <span class="s3">11.0f</span>
+        <span class="s0">val </span>PLAYER_MOVE_VELOCITY = <span class="s3">20.0f</span>
+    }
+
+    private <span class="s0">var </span>mState: Int
+
+    init {
+        setSize(PLAYER_WIDTH, PLAYER_HEIGHT)
+        mState = PLAYER_STATE_FALL
+    }
+
+    <span class="s0">fun </span>update(delta: Float, accelx: Float) {
+
+        <span class="s2">//重力をプレイヤーの速度に加算し、速度から位置を計算する</span>
+        velocity.add(<span class="s3">0f</span>,GameScreen.GRAVITY * delta)
+        velocity.x = -accelx / <span class="s3">10 </span>* PLAYER_MOVE_VELOCITY
+        setPosition(x + velocity.x * delta, y + velocity.y * delta)
+
+        <span class="s2">// y方向の速度が正（＝上方向）のときにSTATEがPLAYER_STATE_JUMPでなければPLAYER_STATE_JUMPにする</span>
+        <span class="s0">if </span>(velocity.y &lt; <span class="s3">0</span>) {
+            <span class="s0">if </span>(mState != PLAYER_STATE_FALL) {
+                mState = PLAYER_STATE_JUMP
+            }
+        }
+        <span class="s2">// y方向の速度が負（＝下方向）のときにSTATEがPLAYER_STATE_FALLでなければPLAYER_STATE_FALLにする</span>
+        <span class="s0">if </span>(velocity.y &lt; <span class="s3">0</span>) {
+            <span class="s0">if </span>(mState != PLAYER_STATE_FALL) {
+                mState = PLAYER_STATE_FALL
+            }
+        }
+        <span class="s2">// 画面の端まで来たら反対側に移動させる</span>
+        <span class="s0">if </span>(x + PLAYER_WIDTH / <span class="s3">2 </span>&lt; <span class="s3">0</span>) {
+            x = GameScreen.WORLD_WIDTH - PLAYER_WIDTH / <span class="s3">2</span>
+        } <span class="s0">else if </span>(x + PLAYER_WIDTH / <span class="s3">2 </span>&gt; GameScreen.WORLD_WIDTH) {
+            x = <span class="s3">0f</span>
+        }
+    }
+
+    <span class="s0">fun </span>hitStep() {
+        velocity.y = PLAYER_JUMP_VELOCITY
+        mState = PLAYER_STATE_JUMP
+    }
+
+}</pre>
+</body>
+</html>

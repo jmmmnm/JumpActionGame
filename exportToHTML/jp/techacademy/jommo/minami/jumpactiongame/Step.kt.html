@@ -1,0 +1,78 @@
+<html>
+<head>
+<title>Step.kt</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #000080; font-weight: bold;}
+.s1 { color: #000000;}
+.s2 { color: #808080; font-style: italic;}
+.s3 { color: #0000ff;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+Step.kt</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span>jp.techacademy.jommo.minami.jumpactiongame
+
+import com.badlogic.gdx.graphics.Texture
+
+<span class="s0">class </span>Step(type:Int, texture:Texture, srcX: Int, srcY: Int, srcWidth: Int, srcHeight: Int)
+    : GameObject(texture, srcX, srcY, srcWidth, srcHeight) {
+
+    companion <span class="s0">object </span>{
+        <span class="s2">// 横幅、高さ</span>
+        <span class="s0">val </span>STEP_WIDTH = <span class="s3">2.0f</span>
+        <span class="s0">val </span>STEP_HEIGHT = <span class="s3">0.5f</span>
+
+        <span class="s2">// タイプ（通常と動くタイプ）</span>
+        <span class="s0">val </span>STEP_TYPE_STATIC = <span class="s3">0</span>
+        <span class="s0">val </span>STEP_TYPE_MOVING = <span class="s3">1</span>
+
+        <span class="s2">// 状態（通常と消えた状態）</span>
+        <span class="s0">val </span>STEP_STATE_NORMAL = <span class="s3">0</span>
+        <span class="s0">val </span>STEP_STATE_VANISH = <span class="s3">1</span>
+
+
+        <span class="s2">// 速度</span>
+        <span class="s0">val </span>STEP_VELOCITY = <span class="s3">2.0f</span>
+    }
+
+    <span class="s0">var </span>mState: Int = <span class="s3">0</span>
+    <span class="s0">var </span>mType: Int
+
+    init {
+        setSize(STEP_WIDTH, STEP_HEIGHT)
+        mType = type
+        <span class="s0">if </span>(mType == STEP_TYPE_MOVING) {
+            velocity.x = STEP_VELOCITY
+        }
+    }
+
+    <span class="s2">// 座標を更新する</span>
+    <span class="s0">fun </span>update(deltaTime: Float) {
+        <span class="s0">if </span>(mType == STEP_TYPE_MOVING) {
+            x += velocity.x * deltaTime
+
+            <span class="s0">if </span>(x &lt; STEP_WIDTH / <span class="s3">2</span>) {
+                velocity.x = -velocity.x
+                x = STEP_WIDTH /<span class="s3">2</span>
+            }
+            <span class="s0">if </span>(x &gt; GameScreen.WORLD_WIDTH - STEP_WIDTH / <span class="s3">2</span>) {
+                velocity.x = -velocity.x
+                x = GameScreen.WORLD_WIDTH - STEP_WIDTH / <span class="s3">2</span>
+            }
+        }
+    }
+
+    <span class="s2">// 消える</span>
+    <span class="s0">fun </span>vanish(){
+        mState = STEP_STATE_VANISH
+        setAlpha(<span class="s3">0f</span>)
+        velocity.x = <span class="s3">0f</span>
+    }
+}</pre>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<html>
+<head>
+<title>ResultScreen.kt</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #000080; font-weight: bold;}
+.s1 { color: #000000;}
+.s2 { color: #0000ff;}
+.s3 { color: #808080; font-style: italic;}
+.s4 { color: #008000; font-weight: bold;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+ResultScreen.kt</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span>jp.techacademy.jommo.minami.jumpactiongame
+
+import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.ScreenAdapter
+import com.badlogic.gdx.graphics.GL20
+import com.badlogic.gdx.graphics.OrthographicCamera
+import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.BitmapFont
+import com.badlogic.gdx.graphics.g2d.Sprite
+import com.badlogic.gdx.graphics.g2d.TextureRegion
+import com.badlogic.gdx.utils.Align
+import com.badlogic.gdx.utils.viewport.FitViewport
+
+<span class="s0">class </span>ResultScreen(private <span class="s0">val </span>mGame: JumpActionGame, private <span class="s0">val </span>mScore: Int) : ScreenAdapter() {
+    companion <span class="s0">object </span>{
+        internal <span class="s0">val </span>GUI_WIDTH = <span class="s2">320f</span>
+        internal <span class="s0">val </span>GUI_HEIGHT = <span class="s2">480f</span>
+    }
+
+    private <span class="s0">var </span>mBg: Sprite
+    private <span class="s0">var </span>mGuiCamera: OrthographicCamera
+    private <span class="s0">var </span>mGUiViewport: FitViewport
+    private <span class="s0">var </span>mFont: BitmapFont
+
+    init{
+        <span class="s0">if </span>(mGame.mRequestHandler != <span class="s0">null</span>) { <span class="s3">// ←追加する</span>
+            mGame.mRequestHandler.showAds(<span class="s0">true</span>) <span class="s3">// ←追加する</span>
+        } <span class="s3">// ←追加する</span>
+
+        // 背景の準備
+        <span class="s0">val </span>bgTexture = Texture(<span class="s4">&quot;resultback.png&quot;</span>)
+        mBg = Sprite(TextureRegion(bgTexture, <span class="s2">0</span>, <span class="s2">0</span>, <span class="s2">540</span>, <span class="s2">810</span>))
+        mBg.setSize(GUI_WIDTH, GUI_HEIGHT)
+        mBg.setPosition(<span class="s2">0f</span>, <span class="s2">0f</span>)
+
+        <span class="s3">// GUI用のカメラを設定する</span>
+        mGuiCamera = OrthographicCamera()
+        mGuiCamera.setToOrtho(<span class="s0">false</span>, GUI_WIDTH, GUI_HEIGHT)
+        mGUiViewport = FitViewport(GUI_WIDTH, GUI_HEIGHT, mGuiCamera)
+
+        <span class="s3">// フォント</span>
+        mFont = BitmapFont(Gdx.files.internal(<span class="s4">&quot;font.fnt&quot;</span>), Gdx.files.internal(<span class="s4">&quot;font.png&quot;</span>),<span class="s0">false</span>)
+    }
+
+    override <span class="s0">fun </span>render(delta: Float) {
+        <span class="s3">// 描画する</span>
+        Gdx.gl.glClearColor(<span class="s2">0f</span>, <span class="s2">0f</span>, <span class="s2">0f</span>, <span class="s2">1f</span>)
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
+
+        <span class="s3">// カメラの座標をアップデート(計算)し、スプライトの表示に反映させる</span>
+        mGuiCamera.update()
+        mGame.batch.projectionMatrix = mGuiCamera.combined
+
+        mGame.batch.begin()
+        mBg.draw(mGame.batch)
+        mFont.draw(mGame.batch, <span class="s4">&quot;Score: </span><span class="s0">$</span>mScore<span class="s4">&quot;</span>, <span class="s2">0f</span>, GUI_HEIGHT / <span class="s2">2 </span>+ <span class="s2">40</span>, GUI_WIDTH, Align.center, <span class="s0">false</span>)
+        mFont.draw(mGame.batch, <span class="s4">&quot;Retry?&quot;</span>, <span class="s2">0f</span>, GUI_HEIGHT /<span class="s2">2 </span>-<span class="s2">40</span>, GUI_WIDTH, Align.center, <span class="s0">false</span>)
+        mGame.batch.end()
+
+        <span class="s0">if </span>(Gdx.input.justTouched()) {
+            <span class="s0">if </span>(mGame.mRequestHandler != <span class="s0">null</span>) { <span class="s3">// ←追加する</span>
+                mGame.mRequestHandler.showAds(<span class="s0">false</span>) <span class="s3">// ←追加する</span>
+            } <span class="s3">// ←追加する</span>
+            mGame.screen = GameScreen(mGame)
+        }
+    }
+}</pre>
+</body>
+</html>

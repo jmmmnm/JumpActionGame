@@ -1,0 +1,49 @@
+<html>
+<head>
+<title>Star.kt</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #000080; font-weight: bold;}
+.s1 { color: #000000;}
+.s2 { color: #808080; font-style: italic;}
+.s3 { color: #0000ff;}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+Star.kt</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span>jp.techacademy.jommo.minami.jumpactiongame
+
+import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.Sprite
+
+<span class="s0">class </span>Star(texture: Texture, srcX: Int, srcY: Int, srcWidth: Int, srcHeight: Int)
+    : Sprite(texture, srcX, srcY, srcWidth, srcHeight) {
+
+    companion <span class="s0">object </span>{
+        <span class="s2">// 横幅、高さ</span>
+        <span class="s0">val </span>STAR_WIDTH = <span class="s3">0.8f</span>
+        <span class="s0">val </span>STAR_HEIGHT = <span class="s3">0.8f</span>
+
+        <span class="s2">// 状態</span>
+        <span class="s0">val </span>STAR_EXIST = <span class="s3">0</span>
+        <span class="s0">val </span>STAR_NONE  = <span class="s3">1</span>
+    }
+
+    <span class="s0">var </span>mState: Int = <span class="s3">0</span>
+
+    init {
+        setSize(STAR_WIDTH, STAR_HEIGHT)
+        mState = STAR_EXIST
+    }
+
+    <span class="s0">fun </span>get() {
+        mState = STAR_NONE
+        setAlpha(<span class="s3">0f</span>)
+    }
+}</pre>
+</body>
+</html>
